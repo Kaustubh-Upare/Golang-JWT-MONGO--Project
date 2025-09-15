@@ -9,7 +9,7 @@ import (
 )
 
 const db = "movies"
-const collection = "movies"
+const collName = "movies"
 
 var mongoClient *mongo.Client
 
