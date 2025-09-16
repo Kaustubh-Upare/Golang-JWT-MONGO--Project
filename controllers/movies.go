@@ -115,3 +115,28 @@ func (h *MovieHandler) TestBulk(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]any{"success": true, "created": "Bulk Created Succesfully"})
 }
+
+func (h *MovieHandler) DeleteOne(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	if _, err := primitive.ObjectIDFromHex(id); err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	if err := models.DeleteMovie(id); err != nil {
+		http.Error(w, "delete failed", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"ok": true, "success": "deleted Successfully"})
+}
+
+func (h *MovieHandler) DeleteAll(w http.ResponseWriter, r *http.Request) {
+	if err := models.DeleteAll(); err != nil {
+		http.Error(w, "Error While Deleting", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"ok": true, "success": "deleted Successfully"})
+}

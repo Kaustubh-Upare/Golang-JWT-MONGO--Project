@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/kaustubh-upare/jwtWithMongo/controllers"
+	"github.com/kaustubh-upare/jwtWithMongo/middleware"
 	"github.com/kaustubh-upare/jwtWithMongo/models"
 )
 
@@ -41,11 +42,15 @@ func main() {
 	router.HandleFunc("GET /movies/test", handlers.TestBulk)
 
 	// Read
-	router.HandleFunc("GET /movies", handlers.ListAll)
+	router.Handle("GET /movies", middleware.TestMiddleware(http.HandlerFunc(handlers.ListAll)))
 	router.HandleFunc("GET /movies/search", handlers.GetByName) //?name=foo
 
 	//Update By ID
 	router.HandleFunc("PATCH /movies/{id}", handlers.Update) //user/{id}
+
+	// DELETION
+	router.HandleFunc("DELETE /movies/{id}", handlers.DeleteOne)
+	router.HandleFunc("DELETE /movies", handlers.DeleteAll)
 
 	log.Println("Listening on port 8080")
 	errL := http.ListenAndServe(":8080", router)
