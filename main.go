@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/kaustubh-upare/jwtWithMongo/controllers"
+	"github.com/kaustubh-upare/jwtWithMongo/models"
 )
 
 func ping(w http.ResponseWriter, r *http.Request) {
@@ -23,9 +25,27 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	// Database
+	models.ConnectToDatabase()
+
+	fmt.Println("hello 10")
+	handlers := controllers.NewMovieHandler()
+
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /pring", ping)
+
+	// Create
+	router.HandleFunc("POST /movies", handlers.Create)
+	router.HandleFunc("POST /movies/bulk", handlers.CreateMany)
+	router.HandleFunc("GET /movies/test", handlers.TestBulk)
+
+	// Read
+	router.HandleFunc("GET /movies", handlers.ListAll)
+	router.HandleFunc("GET /movies/search", handlers.GetByName) //?name=foo
+
+	//Update By ID
+	router.HandleFunc("PATCH /movies/{id}", handlers.Update) //user/{id}
 
 	log.Println("Listening on port 8080")
 	errL := http.ListenAndServe(":8080", router)
