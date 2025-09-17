@@ -31,6 +31,7 @@ func main() {
 
 	fmt.Println("hello 10")
 	handlers := controllers.NewMovieHandler()
+	userHandlers := controllers.NewUserHandler()
 
 	router := http.NewServeMux()
 
@@ -51,6 +52,11 @@ func main() {
 	// DELETION
 	router.HandleFunc("DELETE /movies/{id}", handlers.DeleteOne)
 	router.HandleFunc("DELETE /movies", handlers.DeleteAll)
+
+	// User Handler
+	router.HandleFunc("POST /user", userHandlers.CreateUser)
+	router.HandleFunc("GET /user", userHandlers.GetUser)
+	router.HandleFunc("POST /user/validate", userHandlers.ValidateUser)
 
 	log.Println("Listening on port 8080")
 	errL := http.ListenAndServe(":8080", router)
