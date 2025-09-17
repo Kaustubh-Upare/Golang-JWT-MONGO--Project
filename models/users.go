@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,7 +18,7 @@ type User struct {
 	ID        primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Name      string             `json:"name" bson:"name"`
 	Email     string             `json:"email" bson:"email"`
-	Password  string             `json:"-" bson:"password" `
+	Password  string             `json:"password" bson:"password"` //This json:"password" is essential
 	CreatedAt time.Time          `json:"createdAt" bson:"createdAt"`
 }
 
@@ -74,7 +75,7 @@ func ValidateUser(email string, password string) (bool, error) {
 	Collection := mongoClient.Database(db).Collection("users")
 
 	err := Collection.FindOne(context.TODO(), filter).Decode(&result)
-	log.Println("bc password", password, "yee", result.Password)
+	// log.Println("bc password", password, "yee", result.Password)
 	log.Println(1)
 
 	if err != nil {
@@ -87,17 +88,18 @@ func ValidateUser(email string, password string) (bool, error) {
 	}
 	log.Println(4)
 	// log.Println("resukt", result)
-	np := []byte(result.Password)
-	p := []byte(password)
+	np := []byte(strings.TrimSpace(result.Password))
+	// log.Println("byte", np)
+	p := []byte(strings.TrimSpace(password))
 	err = bcrypt.CompareHashAndPassword(np, p)
-	log.Println("bcrypt")
+	// log.Println("bcrypt")
 	// log.Println(bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(password)))
 
 	log.Println(5)
 
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			log.Println("Wrong something bc", err)
+			log.Println("Wrong something", err)
 		}
 		log.Println(6)
 		return false, nil //password do not match
