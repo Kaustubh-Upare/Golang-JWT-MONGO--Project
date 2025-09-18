@@ -30,7 +30,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Jwt Authentication
-	token, err := utils.CreateToken(uid.String())
+	token, err := utils.CreateToken(uid)
 	if err != nil {
 		log.Println("token failed", err)
 		http.Error(w, "Failed to create token", http.StatusInternalServerError)
@@ -87,7 +87,7 @@ func (h *UserHandler) ValidateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if isValid {
-		token, err := utils.CreateToken(userId.String())
+		token, err := utils.CreateToken(userId)
 		if err != nil {
 			http.Error(w, "Error in Token Creation", http.StatusInternalServerError)
 			return

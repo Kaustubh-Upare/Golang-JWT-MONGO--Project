@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -9,6 +10,10 @@ import (
 
 	"github.com/kaustubh-upare/jwtWithMongo/utils"
 )
+
+type contextKey string
+
+const userContextKey contextKey = "userId"
 
 func TestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +38,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("auth")
 		if err != nil {
 			if errors.Is(err, http.ErrNoCookie) {
+				log.Print(err)
 				http.Error(w, "You Need to login or Signin First", http.StatusForbidden)
 				return
 			}
@@ -44,13 +50,15 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		err = utils.ValidateCookie(cookie.Value)
+		userId, err := utils.ValidateCookie(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Invalid or Expired Token", http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), userContextKey, userId)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

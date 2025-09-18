@@ -37,6 +37,7 @@ func CreateUser(user User) (primitive.ObjectID, error) {
 	}
 	fmt.Println("Created a user: ", result.InsertedID)
 	uid := result.InsertedID.(primitive.ObjectID)
+	fmt.Println("Created a user  primitive: ", uid)
 	return uid, nil
 }
 
@@ -58,6 +59,7 @@ func GetUser(email string) (User, error) {
 }
 
 func CheckForUser(uid primitive.ObjectID) (bool, error) {
+
 	Collection := mongoClient.Database(db).Collection("users")
 	result := Collection.FindOne(context.TODO(), bson.M{"_id": uid})
 

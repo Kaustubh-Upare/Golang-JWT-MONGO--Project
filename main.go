@@ -43,7 +43,7 @@ func main() {
 	router.HandleFunc("GET /movies/test", handlers.TestBulk)
 
 	// Read
-	router.Handle("GET /movies", middleware.TestMiddleware(http.HandlerFunc(handlers.ListAll)))
+	router.Handle("GET /movies", middleware.AuthMiddleware(middleware.TestMiddleware(http.HandlerFunc(handlers.ListAll))))
 	router.HandleFunc("GET /movies/search", handlers.GetByName) //?name=foo
 
 	//Update By ID
