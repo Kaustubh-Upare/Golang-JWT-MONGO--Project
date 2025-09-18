@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/kaustubh-upare/jwtWithMongo/models"
+	"github.com/kaustubh-upare/jwtWithMongo/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,11 +25,31 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	_, err := models.CreateUser(user)
+	uid, err := models.CreateUser(user)
 	if err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
+	// Jwt Authentication
+	token, err := utils.CreateToken(uid.String())
+	if err != nil {
+		log.Println("token failed", err)
+		http.Error(w, "Failed to create token", http.StatusInternalServerError)
+		return
+	}
+
+	//set token in cookie
+	cookie := http.Cookie{
+		Name:     "Auth",
+		Value:    token,
+		Expires:  time.Now().Add(time.Hour * 24 * 10), //10days
+		HttpOnly: true,                                // Prevents JavaScript from accessing the cookie
+		Secure:   true,                                // Ensures cookie is only sent over HTTPS
+		SameSite: http.SameSiteLaxMode,                // Prevents cross-site request forgery
+		// Path:     "/",
+	}
+	http.SetCookie(w, &cookie)
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
 }
