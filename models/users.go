@@ -57,6 +57,22 @@ func GetUser(email string) (User, error) {
 	return result, nil
 }
 
+func CheckForUser(uid primitive.ObjectID) (bool, error) {
+	Collection := mongoClient.Database(db).Collection("users")
+	result := Collection.FindOne(context.TODO(), bson.M{"_id": uid})
+
+	if result.Err() != nil {
+		if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			// User not found, which is not an error in this context.
+			return false, nil
+		}
+		return false, fmt.Errorf("database query failed: %w", result.Err())
+	}
+
+	return true, nil
+
+}
+
 func UpdateUser(email string, user User) error {
 
 	filter := bson.M{"email": email}
@@ -69,7 +85,7 @@ func UpdateUser(email string, user User) error {
 	return err
 }
 
-func ValidateUser(email string, password string) (bool, error) {
+func ValidateUser(email string, password string) (bool, error, primitive.ObjectID) {
 	var result User
 	filter := bson.D{{"email", email}}
 	Collection := mongoClient.Database(db).Collection("users")
@@ -81,10 +97,10 @@ func ValidateUser(email string, password string) (bool, error) {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			log.Println(2)
-			return false, nil
+			return false, nil, primitive.NilObjectID
 		}
 		log.Println(3)
-		return false, fmt.Errorf("database error: %w", err)
+		return false, fmt.Errorf("database error: %w", err), primitive.NilObjectID
 	}
 	log.Println(4)
 	// log.Println("resukt", result)
@@ -102,8 +118,8 @@ func ValidateUser(email string, password string) (bool, error) {
 			log.Println("Wrong something", err)
 		}
 		log.Println(6)
-		return false, nil //password do not match
+		return false, nil, primitive.NilObjectID //password do not match
 	}
 	log.Println(7)
-	return true, nil //password match
+	return true, nil, result.ID //password match
 }

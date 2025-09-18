@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/kaustubh-upare/jwtWithMongo/models"
 	"github.com/kaustubh-upare/jwtWithMongo/utils"
@@ -39,16 +38,9 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//set token in cookie
-	cookie := http.Cookie{
-		Name:     "Auth",
-		Value:    token,
-		Expires:  time.Now().Add(time.Hour * 24 * 10), //10days
-		HttpOnly: true,                                // Prevents JavaScript from accessing the cookie
-		Secure:   true,                                // Ensures cookie is only sent over HTTPS
-		SameSite: http.SameSiteLaxMode,                // Prevents cross-site request forgery
-		// Path:     "/",
-	}
-	http.SetCookie(w, &cookie)
+	cookie := utils.CookieBoiler("auth", token)
+
+	http.SetCookie(w, cookie)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User created successfully"})
@@ -88,13 +80,23 @@ func (h *UserHandler) ValidateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("valid", loginData)
-	isValid, err := models.ValidateUser(loginData.Email, loginData.Password)
+	isValid, err, userId := models.ValidateUser(loginData.Email, loginData.Password)
 	if err != nil {
 		log.Printf("Validation error: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	if isValid {
+		token, err := utils.CreateToken(userId.String())
+		if err != nil {
+			http.Error(w, "Error in Token Creation", http.StatusInternalServerError)
+			return
+		}
+
+		cookie := utils.CookieBoiler("auth", token)
+
+		http.SetCookie(w, cookie)
+
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Login successful"})
 	} else {
